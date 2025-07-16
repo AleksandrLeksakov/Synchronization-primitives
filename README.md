@@ -53,6 +53,8 @@
 Нет, не отработает.
 
 **Объяснение:**  
+
+
 fun main() {
     CoroutineScope(EmptyCoroutineContext).launch {
         try {
@@ -116,8 +118,8 @@ fun main() {
 нет не отработает
 
 **Объяснение:**  
-import kotlinx.coroutines.*
-import kotlin.coroutines.EmptyCoroutineContext
+
+
 
 fun main() {
     CoroutineScope(EmptyCoroutineContext).launch {
