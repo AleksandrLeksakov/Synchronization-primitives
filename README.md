@@ -117,9 +117,7 @@ fun main() {
 **Отработает ли строка `// <--`?**  
 нет не отработает
 
-**Объяснение:**  
-
-
+**Объяснение:** 
 
 fun main() {
     CoroutineScope(EmptyCoroutineContext).launch {
