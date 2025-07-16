@@ -53,7 +53,56 @@
 Нет, не отработает.
 
 **Объяснение:**  
-`supervisorScope` позволяет дочерним корутинам завершаться независимо, но исключение из одной из корутин всё равно будет перехвачено try-catch. Однако первая корутина с задержкой будет отменена, потому что родительская корутина завершится (из-за исключения во второй корутине) до истечения задержки.
+fun main() {
+    CoroutineScope(EmptyCoroutineContext).launch {
+        try {
+            supervisorScope {
+                launch {
+                    delay(500)
+                    println("Первая корутина бросает исключение") // Выполнится
+                    throw Exception("something bad happened - first") // <--
+                }
+                launch {
+                    println("Вторая корутина бросает исключение") // Выполнится
+                    throw Exception("something bad happened - second")
+                }
+            }
+        } catch (e: Exception) {
+            println("Поймано исключение: ${e.message}") // Выполнится, но message будет "something bad happened - second"
+            e.printStackTrace() // <--  Отработает, но исключение будет от второй корутины
+        }
+    }
+    Thread.sleep(1000)
+
+
+    
+
+    ***по вашему коду***
+    
+    fun main() {
+    CoroutineScope(EmptyCoroutineContext).launch {
+        try {
+            supervisorScope {
+                launch {
+                    delay(500)
+                    println("Первая корутина бросает исключение") // Выполнится
+                    throw Exception("something bad happened") // <--
+                }
+                launch {
+                    println("Вторая корутина бросает исключение") // Выполнится
+                    throw Exception("something bad happened")
+                }
+                delay(800)
+                println("done") // Отработает
+            }
+            println("Код после supervisorScope") // Отработает
+        } catch (e: Exception) {
+            println("Этот блок не будет выполнен")
+            e.printStackTrace() // <-- Не отработает
+        }
+    }
+    Thread.sleep(1000)
+}
 
 ### Вопрос №6
 **Отработает ли строка `// <--`?**  
@@ -64,7 +113,28 @@
 
 ### Вопрос №7
 **Отработает ли строка `// <--`?**  
-Да, отработает.
+нет не отработает
 
 **Объяснение:**  
-Использование `SupervisorJob()` означает, что исключение в одной дочерней корутине не приведёт к отмене других дочерних корутин. Поэтому корутина с задержкой 1000 мс успеет выполниться, несмотря на исключение в другой корутине.
+import kotlinx.coroutines.*
+import kotlin.coroutines.EmptyCoroutineContext
+
+fun main() {
+    CoroutineScope(EmptyCoroutineContext).launch {
+        CoroutineScope(EmptyCoroutineContext + SupervisorJob()).launch {
+            launch {
+                delay(1000)
+                println("ok - первая корутина") // Не отработает: отменена
+            }
+            launch {
+                delay(500)
+                println("ok - вторая корутина") // Не отработает: отменена
+            }
+            println("Родительская корутина бросает исключение") // Выполнится
+            throw Exception("something bad happened")
+        }
+    }
+    Thread.sleep(1000)
+}
+
+println("ok") не будет выполнена, потому что корутина, в которой она находится, будет отменена из-за исключения, брошенного её родительской корутиной (в scope с SupervisorJob).
